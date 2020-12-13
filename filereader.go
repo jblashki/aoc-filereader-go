@@ -144,6 +144,56 @@ func ReadCSVInts(path string) ([]int, error) {
 	return retArray, nil
 }
 
+// Function to read csv file into int slice
+func ReadCSVStrings(path string) ([]string, error) {
+	var retArray []string
+
+	if path == "" {
+		return retArray, errors.New("empty path")
+	}
+
+	// Open file here
+	csvFile, err := os.Open(path)
+	if err != nil {
+		return retArray, err
+	}
+
+	defer func() {
+		if err = csvFile.Close(); err != nil {
+			return
+		}
+	}()
+
+	reader := csv.NewReader(csvFile)
+
+	for {
+		record, err := reader.Read()
+
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+
+			if perr, ok := err.(*csv.ParseError); ok {
+				// Only care about ParseErrors if it's
+				// Error with field count
+				if perr.Err != csv.ErrFieldCount {
+					return retArray, err
+				}
+			} else {
+				return retArray, err
+			}
+		}
+
+		for value := range record {
+			s := strings.TrimSpace(record[value])
+			retArray = append(retArray, s)
+		}
+	}
+
+	return retArray, nil
+}
+
 // Function to read csv file into slice of string slices for each line
 func ReadCSVStringsPerLine(path string) ([][]string, error) {
 	var retArray [][]string
